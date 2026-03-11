@@ -203,8 +203,11 @@ export async function uploadCalendarImage(formData: FormData) {
 // カレンダー画像の一覧を取得するサーバーアクション
 export async function listCalendarImages() {
   try {
-    // Supabaseクライアントを作成
-    const supabase = createServiceRoleClient()
+    // 読み取り専用なので匿名キーのクライアントを使用
+    const { getSupabaseUrl, getSupabaseAnonKey } = await import("@/lib/env")
+    const supabase = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
     if (!supabase) {
       return { success: false, error: "Supabaseクライアントの作成に失敗しました", data: [] }
     }
@@ -237,8 +240,11 @@ export async function listCalendarImages() {
 // 現在表示すべきカレンダー画像を取得するサーバーアクション
 export async function getCurrentCalendarImages() {
   try {
-    // Supabaseクライアントを作成
-    const supabase = createServiceRoleClient()
+    // 読み取り専用なので匿名キーのクライアントを使用
+    const { getSupabaseUrl, getSupabaseAnonKey } = await import("@/lib/env")
+    const supabase = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
     if (!supabase) {
       return { success: false, error: "Supabaseクライアントの作成に失敗しました", data: [] }
     }
