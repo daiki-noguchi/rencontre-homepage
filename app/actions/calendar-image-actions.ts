@@ -73,47 +73,26 @@ export async function ensureCalendarImageBucket() {
       return { success: false, error: errorMsg }
     }
 
-    console.log("[v0] バケット一覧を取得中...")
-    // バケットの存在を確認
-    const { data: buckets, error: listError } = await supabase.storage.listBuckets()
-
-    if (listError) {
-      console.error("[v0] バケット一覧の取得に失敗しました:", listError)
-      console.error("[v0] エラーの詳細:", JSON.stringify(listError, null, 2))
-      console.error(
-        "[v0] ヒント: 'signature verification failed'エラーの場合、SUPABASE_SERVICE_ROLE_KEYが正しくない可能性があります",
-      )
-      console.error("[v0] 確認事項:")
-      console.error("[v0] 1. Supabaseダッシュボード → Settings → API → service_role key (secret)をコピー")
-      console.error("[v0] 2. v0のVars（環境変数）セクションでSUPABASE_SERVICE_ROLE_KEYを更新")
-      console.error("[v0] 3. anon keyではなくservice_role keyを使用していることを確認")
-      return {
-        success: false,
-        error: `バケット一覧の取得エラー: ${listError.message}\n\nSUPABASE_SERVICE_ROLE_KEYが正しく設定されているか確認してください。Supabaseダッシュボードの Settings → API から service_role key (secret) をコピーして、v0の環境変数を更新してください。`,
-      }
-    }
-
-    console.log("[v0] バケット一覧:", buckets?.map((b) => b.name).join(", "))
-
     const bucketName = "images"
-    const bucketExists = buckets?.some((bucket) => bucket.name === bucketName)
 
-    // バケットが存在しない場合は作成
-    if (!bucketExists) {
-      console.log(`[v0] バケット '${bucketName}' が存在しないため作成します`)
-      const { error: createError } = await supabase.storage.createBucket(bucketName, {
-        public: true,
-        fileSizeLimit: 10485760, // 10MB
-      })
+    // バケットの作成を試みる（既に存在する場合はエラーを無視）
+    console.log(`[v0] バケット '${bucketName}' の存在確認中...`)
+    const { error: createError } = await supabase.storage.createBucket(bucketName, {
+      public: true,
+      fileSizeLimit: 10485760, // 10MB
+    })
 
-      if (createError) {
+    if (createError) {
+      // "already exists" エラーは正常（バケットが既に存在する）
+      if (createError.message?.includes("already exists") || createError.message?.includes("Already exists")) {
+        console.log(`[v0] バケット '${bucketName}' は既に存在します`)
+      } else {
         console.error(`[v0] バケット '${bucketName}' の作成に失敗しました:`, createError)
+        console.error("[v0] エラーの詳細:", JSON.stringify(createError, null, 2))
         return { success: false, error: `バケット作成エラー: ${createError.message}` }
       }
-
-      console.log(`[v0] バケット '${bucketName}' を作成しました`)
     } else {
-      console.log(`[v0] バケット '${bucketName}' は既に存在します`)
+      console.log(`[v0] バケット '${bucketName}' を作成しました`)
     }
 
     return { success: true }
