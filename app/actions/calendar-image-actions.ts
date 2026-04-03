@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import { v4 as uuidv4 } from "uuid"
 import type { CalendarImage, CalendarImageInput } from "@/lib/calendar-image-types"
 import { createClient } from "@supabase/supabase-js"
+import { getSupabaseUrl, getSupabaseAnonKey } from "@/lib/env"
 
 // サービスロールクライアントのシングルトンインスタンス
 let serviceRoleClient: ReturnType<typeof createClient> | null = null
@@ -179,17 +180,21 @@ export async function uploadCalendarImage(formData: FormData) {
   }
 }
 
+// 読み取り専用のSupabaseクライアント（匿名キー使用）
+let anonClient: ReturnType<typeof createClient> | null = null
+
+function getAnonClient() {
+  if (anonClient) return anonClient
+  anonClient = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+  return anonClient
+}
+
 // カレンダー画像の一覧を取得するサーバーアクション
 export async function listCalendarImages() {
   try {
-    // 読み取り専用なので匿名キーのクライアントを使用
-    const { getSupabaseUrl, getSupabaseAnonKey } = await import("@/lib/env")
-    const supabase = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
-      auth: { persistSession: false, autoRefreshToken: false },
-    })
-    if (!supabase) {
-      return { success: false, error: "Supabaseクライアントの作成に失敗しました", data: [] }
-    }
+    const supabase = getAnonClient()
 
     // カレンダー画像の一覧を取得
     const { data, error } = await supabase
@@ -207,10 +212,12 @@ export async function listCalendarImages() {
       data: data as CalendarImage[],
     }
   } catch (error) {
-    console.error("カレンダー画像の一覧取得中にエラが発生しました:", error)
+    console.error("カレンダー画像の一覧取得中にエラーが発生しました:", error)
+    // クライアントをリセットして次回再作成
+    anonClient = null
     return {
       success: false,
-      error: error instanceof Error ? error.message : "不明なエラーが発生しました",
+      error: error instanceof Error ? `${error.name}: ${error.message}` : "不明なエラーが発生しました",
       data: [],
     }
   }
@@ -219,14 +226,7 @@ export async function listCalendarImages() {
 // 現在表示すべきカレンダー画像を取得するサーバーアクション
 export async function getCurrentCalendarImages() {
   try {
-    // 読み取り専用なので匿名キーのクライアントを使用
-    const { getSupabaseUrl, getSupabaseAnonKey } = await import("@/lib/env")
-    const supabase = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
-      auth: { persistSession: false, autoRefreshToken: false },
-    })
-    if (!supabase) {
-      return { success: false, error: "Supabaseクライアントの作成に失敗しました", data: [] }
-    }
+    const supabase = getAnonClient()
 
     // 現在の日付
     const today = new Date().toISOString().split("T")[0]
@@ -251,9 +251,10 @@ export async function getCurrentCalendarImages() {
     }
   } catch (error) {
     console.error("カレンダー画像の取得中にエラーが発生しました:", error)
+    anonClient = null
     return {
       success: false,
-      error: error instanceof Error ? error.message : "不明なエラーが発生しました",
+      error: error instanceof Error ? `${error.name}: ${error.message}` : "不明なエラーが発生しました",
       data: [],
     }
   }
