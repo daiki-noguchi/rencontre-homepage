@@ -122,14 +122,12 @@ export default function InformationSection() {
             // データ取得
             data = await (activeTab === "all" ? getAllNews() : getNewsByCategory(activeTab))
 
-            // データが取得できた場合はループを抜ける
-            if (data && Array.isArray(data) && data.length > 0) {
+            // データが取得できた場合はループを抜ける（0件も正常な状態として扱う）
+            if (Array.isArray(data)) {
               console.log(`${data.length}件のニュースデータを取得しました`)
               break
             }
 
-            // データが空の場合は再試行
-            console.warn("データが空です。再試行します。")
             fetchAttempts++
 
             // 最後の試行でなければ少し待機
@@ -174,7 +172,7 @@ export default function InformationSection() {
             while (categoryAttempts < maxAttempts) {
               try {
                 allNews = await getAllNews()
-                if (allNews && Array.isArray(allNews) && allNews.length > 0) {
+                if (Array.isArray(allNews)) {
                   break
                 }
                 categoryAttempts++
@@ -292,13 +290,6 @@ export default function InformationSection() {
     setRetryCount((prev) => prev + 1)
   }, [activeTab])
 
-  // 初期表示時にダミーデータを設定
-  useEffect(() => {
-    if (announcements.length === 0 && !loading && !error) {
-      console.log("初期表示時にデータがありません。データベースからの取得を試みます")
-      handleRetry() // ダミーデータではなく再試行を実行
-    }
-  }, [announcements.length, loading, error, handleRetry])
 
   return (
     <section id="information" className="bg-[#cee6c1] text-[#4A4A4A] py-20 overflow-hidden">

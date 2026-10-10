@@ -23,12 +23,19 @@ export default async function NewsDetailPage({ params }: NewsPageProps) {
   }
 
   let news = null
+  let fetchFailed = false
 
   try {
     // サーバーアクションでニュース記事を取得
     news = await getNewsById(id)
   } catch (error) {
+    fetchFailed = true
     console.error(`ID ${id} のニュース記事の取得中にエラーが発生しました:`, error)
+  }
+
+  // 取得自体に成功して記事が存在しない場合（削除済みなど）は、ダミーデータで埋めずに404とする
+  if (!news && !fetchFailed) {
+    notFound()
   }
 
   // サーバーアクションが失敗した場合はダミーデータを使用

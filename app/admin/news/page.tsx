@@ -39,10 +39,15 @@ export default function NewsManagementPage() {
   const handleDelete = async (id: number) => {
     if (window.confirm("この記事を削除してもよろしいですか？")) {
       try {
-        await deleteNews(id)
-        setNews(news.filter((item) => item.id !== id))
+        const result = await deleteNews(id)
+        if (!result.success) {
+          window.alert(`記事の削除に失敗しました: ${result.error ?? "不明なエラー"}`)
+          return
+        }
+        setNews((prev) => prev.filter((item) => item.id !== id))
       } catch (error) {
         console.error("記事の削除に失敗しました", error)
+        window.alert("記事の削除に失敗しました")
       }
     }
   }

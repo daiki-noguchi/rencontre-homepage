@@ -53,13 +53,8 @@ export async function getAllNews(): Promise<NewsArticle[]> {
       return getDummyNews()
     }
 
-    // ニュース記事が取得できなかった場合はダミーデータを返す
-    if (!data || data.length === 0) {
-      console.log("getAllNews: ニュース記事が見つかりませんでした。ダミーデータを返します。")
-      return getDummyNews()
-    }
-
-    return data
+    // 0件は正常な状態なのでダミーデータで埋めない（管理画面でダミー記事が表示され削除できなくなるため）
+    return data ?? []
   } catch (error) {
     console.error("getAllNews: ニュース記事の取得中にエラーが発生しました:", error)
     return getDummyNews()
@@ -89,7 +84,7 @@ export async function getNewsById(id: number): Promise<NewsArticle | null> {
     // ニュース記事が見つからない場合
     if (!data || data.length === 0) {
       console.log(`getNewsById: ID ${id} のニュース記事が見つかりませんでした`)
-      return getDummyNewsById(id)
+      return null
     }
 
     return data[0]
@@ -123,13 +118,7 @@ export async function getNewsByCategory(category: string): Promise<NewsArticle[]
       return getDummyNews().filter((news) => news.category === category)
     }
 
-    // ニュース記事が見つからない場合
-    if (!data || data.length === 0) {
-      console.log(`getNewsByCategory: カテゴリー ${category} のニュース記事が見つかりませんでした`)
-      return getDummyNews().filter((news) => news.category === category)
-    }
-
-    return data
+    return data ?? []
   } catch (error) {
     console.error(`getNewsByCategory: カテゴリー ${category} のニュース記事の取得中にエラーが発生しました:`, error)
     return getDummyNews().filter((news) => news.category === category)
@@ -294,16 +283,22 @@ export async function deleteNews(id: number): Promise<{ success: boolean; error?
       return { success: false, error: "データベース接続に失敗しました。環境変数の設定を確認してください。" }
     }
 
-    // ニュース記事を削除
-    const { error } = await supabase.from("news").delete().eq("id", id)
+    // ニュース記事を削除（削除された行を返させて、実際に削除できたかを確認する）
+    const { data, error } = await supabase.from("news").delete().eq("id", id).select("id")
 
     if (error) {
       console.error("deleteNews: ニュース記事の削除に失敗しました:", error)
       return { success: false, error: error.message }
     }
 
+    if (!data || data.length === 0) {
+      console.error(`deleteNews: ID ${id} のニュース記事は削除されませんでした（存在しないか権限がありません）`)
+      return { success: false, error: "記事が見つからないか、削除する権限がありません" }
+    }
+
     // キャッシュを更新
     revalidatePath("/#information")
+    revalidatePath(`/news/${id}`)
 
     console.log("deleteNews: ニュース記事の削除が完了しました")
     return { success: true }
