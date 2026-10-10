@@ -1,5 +1,6 @@
 "use server"
 
+import { requireAdmin } from "@/lib/auth"
 import { createAdminSupabaseClient, createDirectSupabaseClient } from "@/lib/supabase"
 import type { LessonWithRelations, LessonInput } from "@/lib/lesson-types"
 import { getDummyLessons } from "@/lib/dummy-data"
@@ -45,6 +46,8 @@ export async function createLesson(
   lessonInput: LessonInput,
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
+    await requireAdmin()
+
     console.log("createLesson: レッスンの作成を開始します")
 
     // 直接サービスロールクライアントを作成
@@ -174,6 +177,8 @@ export async function updateLesson(
   lessonInput: LessonInput,
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
+
     console.log(`updateLesson: ID ${id} のレッスンを更新します`)
 
     // 直接サービスロールクライアントを作成
@@ -549,6 +554,8 @@ export async function getLessonsBasicInfo(): Promise<LessonWithRelations[]> {
 // レッスンを削除する
 export async function deleteLesson(id: number): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
+
     console.log(`deleteLesson: ID ${id} のレッスンを削除します`)
 
     // 直接サービスロールクライアントを作成

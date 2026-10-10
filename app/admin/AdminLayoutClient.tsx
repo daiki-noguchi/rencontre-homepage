@@ -19,18 +19,21 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
       return
     }
 
-    // クライアントサイドでの認証チェック
-    const isLoggedIn = localStorage.getItem("admin-logged-in")
-
-    if (isLoggedIn !== "true") {
-      router.push("/admin/login")
-    } else {
-      setIsLoading(false)
-    }
+    // サーバー側のセッション（httpOnlyクッキー）で認証状態を確認
+    fetch("/api/auth/check")
+      .then((res) => res.json())
+      .then(({ authenticated }) => {
+        if (authenticated) {
+          setIsLoading(false)
+        } else {
+          router.push("/admin/login")
+        }
+      })
+      .catch(() => router.push("/admin/login"))
   }, [pathname, router])
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin-logged-in")
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => {})
     router.push("/admin/login")
   }
 

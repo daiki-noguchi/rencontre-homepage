@@ -1,5 +1,6 @@
 "use server"
 
+import { requireAdmin } from "@/lib/auth"
 import { createAdminSupabaseClient, createDirectSupabaseClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 
@@ -13,6 +14,8 @@ export async function addNewsArticle(formData: {
   date: string
 }) {
   try {
+    await requireAdmin()
+
     console.log("addNewsArticle: ニュース記事の追加を開始します")
 
     // Supabaseクライアントの作成（複数の方法を試す）

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server"
 import { isAuthenticated } from "@/lib/auth"
 
+// クッキーを参照するため、静的レンダリングさせない
+export const dynamic = "force-dynamic"
+
 export async function GET() {
   try {
     const authenticated = await isAuthenticated()

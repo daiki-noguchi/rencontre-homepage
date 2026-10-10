@@ -11,10 +11,6 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2, Lock } from "lucide-react"
 
-// ハードコードされた認証情報（本番環境では使用しないでください）
-const ADMIN_USERNAME = "rencontre_admin"
-const ADMIN_PASSWORD = "mihoamethyst25"
-
 export default function AdminLoginPage() {
   const router = useRouter()
   const { toast } = useToast()
@@ -24,20 +20,29 @@ export default function AdminLoginPage() {
 
   // ログイン状態をチェック
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem("admin-logged-in")
-    if (isLoggedIn === "true") {
-      router.push("/admin")
-    }
+    fetch("/api/auth/check")
+      .then((res) => res.json())
+      .then(({ authenticated }) => {
+        if (authenticated) {
+          router.push("/admin")
+        }
+      })
+      .catch(() => {})
   }, [router])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
-    // シンプルな認証チェック
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    // サーバー側で認証し、成功時はhttpOnlyクッキーにセッションが保存される
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    }).catch(() => null)
+
+    if (res?.ok) {
       // ログイン成功
-      localStorage.setItem("admin-logged-in", "true")
 
       toast({
         title: "ログイン成功",

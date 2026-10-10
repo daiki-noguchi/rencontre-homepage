@@ -1,23 +1,11 @@
 "use client"
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Newspaper, BookOpen, Calendar, Star, Home } from "lucide-react"
 
 export default function AdminPage() {
-  const router = useRouter()
-
-  // ログイン状態をチェック
-  useEffect(() => {
-    const isLoggedIn = localStorage.getItem("admin-logged-in")
-    if (isLoggedIn !== "true") {
-      router.push("/admin/login")
-    }
-  }, [router])
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#cee6c1] to-[#e6f2df]">
       <div className="container mx-auto px-4 py-12">

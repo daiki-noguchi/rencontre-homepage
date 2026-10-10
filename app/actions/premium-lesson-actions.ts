@@ -1,6 +1,8 @@
 "use server"
 
+import { requireAdmin } from "@/lib/auth"
 import { createServerSupabaseClient } from "@/lib/supabase"
+import { createServiceRoleClient } from "@/lib/supabase-admin"
 import type { PremiumLessonInput, PremiumLessonWithFeatures } from "@/lib/premium-lesson-types"
 import { revalidatePath } from "next/cache"
 
@@ -96,7 +98,9 @@ export async function createPremiumLesson(
   input: PremiumLessonInput,
 ): Promise<{ success: boolean; id?: number; error?: string }> {
   try {
-    const supabase = createServerSupabaseClient()
+    await requireAdmin()
+
+    const supabase = createServiceRoleClient()
     if (!supabase) {
       return { success: false, error: "Supabaseクライアントの作成に失敗しました" }
     }
@@ -151,12 +155,14 @@ export async function updatePremiumLesson(
   input: PremiumLessonInput,
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
+
     // IDが無効な場合は早期リターン
     if (!id || isNaN(id)) {
       return { success: false, error: `無効なプレミアムレッスンID: ${id}` }
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = createServiceRoleClient()
     if (!supabase) {
       return { success: false, error: "Supabaseクライアントの作成に失敗しました" }
     }
@@ -215,12 +221,14 @@ export async function updatePremiumLesson(
 // プレミアムレッスンを削除
 export async function deletePremiumLesson(id: number): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
+
     // IDが無効な場合は早期リターン
     if (!id || isNaN(id)) {
       return { success: false, error: `無効なプレミアムレッスンID: ${id}` }
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = createServiceRoleClient()
     if (!supabase) {
       return { success: false, error: "Supabaseクライアントの作成に失敗しました" }
     }

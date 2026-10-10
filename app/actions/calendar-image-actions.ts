@@ -1,5 +1,6 @@
 "use server"
 
+import { requireAdmin } from "@/lib/auth"
 import { createServiceRoleClient } from "@/lib/supabase-admin"
 import { revalidatePath } from "next/cache"
 import { v4 as uuidv4 } from "uuid"
@@ -65,6 +66,8 @@ const createCalendarServiceRoleClient = () => {
 // バケットが存在するか確認し、なければ作成する
 export async function ensureCalendarImageBucket() {
   try {
+    await requireAdmin()
+
     console.log("[v0] バケット確認を開始します")
     const supabase = createCalendarServiceRoleClient()
     if (!supabase) {
@@ -129,6 +132,8 @@ export async function ensureCalendarImageBucket() {
 // カレンダー画像をアップロードするサーバーアクション
 export async function uploadCalendarImage(formData: FormData) {
   try {
+    await requireAdmin()
+
     console.log("[v0] カレンダー画像アップロードを開始します")
 
     // ファイルを取得
@@ -283,6 +288,8 @@ export async function getCurrentCalendarImages() {
 // カレンダー画像を追加するサーバーアクション
 export async function addCalendarImage(input: CalendarImageInput) {
   try {
+    await requireAdmin()
+
     // Supabaseクライアントを作成
     const supabase = createServiceRoleClient()
     if (!supabase) {
@@ -327,6 +334,8 @@ export async function addCalendarImage(input: CalendarImageInput) {
 // カレンダー画像を更新するサーバーアクション
 export async function updateCalendarImage(id: number, input: Partial<CalendarImageInput>) {
   try {
+    await requireAdmin()
+
     // Supabaseクライアントを作成
     const supabase = createServiceRoleClient()
     if (!supabase) {
@@ -372,6 +381,8 @@ export async function updateCalendarImage(id: number, input: Partial<CalendarIma
 // カレンダー画像を削除するサーバーアクション
 export async function deleteCalendarImage(id: number) {
   try {
+    await requireAdmin()
+
     // Supabaseクライアントを作成
     const supabase = createServiceRoleClient()
     if (!supabase) {
@@ -405,6 +416,8 @@ export async function deleteCalendarImage(id: number) {
 // ストレージからカレンダー画像を削除するサーバーアクション
 export async function deleteCalendarImageFromStorage(path: string) {
   try {
+    await requireAdmin()
+
     // Supabaseクライアントを作成
     const supabase = createServiceRoleClient()
     if (!supabase) {

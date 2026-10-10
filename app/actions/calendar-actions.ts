@@ -1,5 +1,7 @@
 "use server"
 
+import { requireAdmin } from "@/lib/auth"
+import { createServiceRoleClient } from "@/lib/supabase-admin"
 import { createClient } from "@supabase/supabase-js"
 import type {
   BusinessDay,
@@ -18,15 +20,10 @@ function logDebug(message: string, data?: any) {
   console.log(`[Calendar Action] ${message}`, data ? data : "")
 }
 
-// サービスロールクライアントのシングルトンインスタンス
-let serviceRoleClient: ReturnType<typeof createClient> | null = null
-
 // サーバーアクション用のSupabaseクライアントを作成
 const createCalendarActionClient = (useServiceRole = false) => {
-  // 既存のクライアントがあれば再利用
-  if (serviceRoleClient) {
-    console.log("既存のサービスロールクライアントを再利用します")
-    return serviceRoleClient
+  if (useServiceRole) {
+    return createServiceRoleClient()
   }
 
   try {
@@ -130,6 +127,8 @@ export async function setBusinessDay(
   input: CalendarInput,
 ): Promise<{ success: boolean; error?: string; data?: BusinessDay }> {
   try {
+    await requireAdmin()
+
     logDebug(`${input.date}の営業状態を設定します`, input)
 
     // カレンダー専用のSupabaseクライアントを作成
@@ -224,6 +223,8 @@ export async function setBulkBusinessDays(
   input: BulkCalendarInput,
 ): Promise<{ success: boolean; error?: string; count?: number }> {
   try {
+    await requireAdmin()
+
     logDebug(`${input.dates.length}件の日付の営業状態を一括設定します`, input)
 
     // カレンダー専用のSupabaseクライアントを作成
@@ -285,6 +286,8 @@ export async function addTimeSlot(
   input: TimeSlotInput,
 ): Promise<{ success: boolean; error?: string; data?: TimeSlot }> {
   try {
+    await requireAdmin()
+
     logDebug(`カレンダーID ${input.calendar_id} に時間枠を追加します`, input)
 
     // カレンダー専用のSupabaseクライアントを作成
@@ -333,6 +336,8 @@ export async function addTimeSlot(
 // 時間枠を削除する
 export async function deleteTimeSlot(id: number): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
+
     logDebug(`時間枠ID ${id} を削除します`)
 
     // カレンダー専用のSupabaseクライアントを作成

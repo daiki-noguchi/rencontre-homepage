@@ -1,22 +1,15 @@
 "use server"
 
+import { requireAdmin } from "@/lib/auth"
+import { createServiceRoleClient } from "@/lib/supabase-admin"
 import type { NewsArticle } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { getDummyNews, getDummyNewsById } from "@/lib/dummy-data"
 import { createClient } from "@supabase/supabase-js"
 import { getSupabaseUrl, getSupabaseAnonKey } from "@/lib/env"
 
-// サービスロールクライアントのシングルトンインスタンス
-let serviceRoleClient: ReturnType<typeof createClient> | null = null
-
-// サーバーアクション用のSupabaseクライアントを作成
+// 読み取り用のSupabaseクライアントを作成（書き込みはサービスロールクライアントを使用する）
 const createNewsActionClient = () => {
-  // 既存のクライアントがあれば再利用
-  if (serviceRoleClient) {
-    console.log("既存のサービスロールクライアントを再利用します")
-    return serviceRoleClient
-  }
-
   try {
     const supabaseUrl = getSupabaseUrl()
     const supabaseKey = getSupabaseAnonKey()
@@ -135,10 +128,12 @@ export async function addNewsArticle(formData: {
   date: string
 }): Promise<{ success: boolean; error?: string; data?: any }> {
   try {
+    await requireAdmin()
+
     console.log("addNewsArticle: ニュース記事の追加を開始します")
 
     // Supabaseクライアントの作成
-    const supabase = createNewsActionClient()
+    const supabase = createServiceRoleClient()
     if (!supabase) {
       console.error("addNewsArticle: サービスロールクライアントの作成に失敗しました")
       return {
@@ -212,10 +207,12 @@ export async function addNewsArticle(formData: {
 // ニュース記事を更新する関数
 export async function updateNews(id: number, formData: NewsArticle): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
+
     console.log(`updateNews: ID ${id} のニュース記事を更新します`)
 
     // Supabaseクライアントの作成
-    const supabase = createNewsActionClient()
+    const supabase = createServiceRoleClient()
     if (!supabase) {
       return { success: false, error: "データベース接続に失敗しました。環境変数の設定を確認してください。" }
     }
@@ -275,10 +272,12 @@ export async function updateNews(id: number, formData: NewsArticle): Promise<{ s
 // ニュース記事を削除する関数
 export async function deleteNews(id: number): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin()
+
     console.log(`deleteNews: ID ${id} のニュース記事を削除します`)
 
     // Supabaseクライアントの作成
-    const supabase = createNewsActionClient()
+    const supabase = createServiceRoleClient()
     if (!supabase) {
       return { success: false, error: "データベース接続に失敗しました。環境変数の設定を確認してください。" }
     }

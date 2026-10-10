@@ -1,5 +1,6 @@
 "use server"
 
+import { requireAdmin } from "@/lib/auth"
 import { createServiceRoleClient } from "@/lib/supabase-admin"
 import { revalidatePath } from "next/cache"
 import { v4 as uuidv4 } from "uuid"
@@ -7,6 +8,8 @@ import { v4 as uuidv4 } from "uuid"
 // バケットが存在するか確認し、なければ作成する
 export async function ensureNewsImageBucket() {
   try {
+    await requireAdmin()
+
     const supabase = createServiceRoleClient()
     if (!supabase) {
       return { success: false, error: "Supabaseクライアントの作成に失敗しました" }
@@ -54,6 +57,8 @@ export async function ensureNewsImageBucket() {
 // ニュース画像をア��プロードするサーバーアクション
 export async function uploadNewsImage(formData: FormData) {
   try {
+    await requireAdmin()
+
     // ファイルを取得
     const file = formData.get("file") as File
     if (!file) {

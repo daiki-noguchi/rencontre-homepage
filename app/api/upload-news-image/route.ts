@@ -1,8 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { isAuthenticated } from "@/lib/auth"
 import { createClient } from "@supabase/supabase-js"
 import { getSupabaseUrl, getSupabaseServiceRoleKey } from "@/lib/env"
 
 export async function POST(request: NextRequest) {
+  if (!(await isAuthenticated())) {
+    return NextResponse.json({ success: false, error: "管理者としてログインしていません" }, { status: 401 })
+  }
+
   try {
     console.log("upload-news-image: 画像アップロードリクエストを受信しました")
 
