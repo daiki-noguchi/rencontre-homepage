@@ -23,20 +23,16 @@ begin
   end loop;
 end $$;
 
--- 2. users: anon/authenticated からは一切アクセス不可
+-- 2. users: 既存の「本人のデータのみ」ポリシーは維持し、RLSをバイパスする TRUNCATE だけ剥奪
 alter table public.users enable row level security;
-do $$
-declare
-  p record;
-begin
-  for p in select policyname from pg_policies where schemaname = 'public' and tablename = 'users' loop
-    execute format('drop policy %I on public.users', p.policyname);
-  end loop;
-end $$;
+revoke truncate on table public.users from anon, authenticated;
 
--- 3. 念のためテーブル権限でも書き込みを剥奪
-revoke insert, update, delete, truncate on all tables in schema public from anon, authenticated;
-revoke all on table public.users from anon, authenticated;
+-- 3. 念のためテーブル権限でも書き込みを剥奪（TRUNCATE は RLS をバイパスするため必須）
+revoke insert, update, delete, truncate on
+  public.news, public.lessons, public.lesson_images, public.lesson_plans, public.lesson_features,
+  public.premium_lessons, public.premium_lesson_features,
+  public.business_calendar, public.time_slots, public.calendar_images
+from anon, authenticated;
 
 -- 4. 書き込み系RPC（アプリからは未使用）を anon/authenticated から実行不可に
 do $$
@@ -53,7 +49,7 @@ begin
   end loop;
 end $$;
 
--- 5. Storage: 書き込み系ポリシーを削除し、images バケットの読み取りのみ許可
+-- 5. Storage: 書き込み系ポリシーを削除する（images バケットの既存 SELECT ポリシーは残す）
 do $$
 declare
   p record;
@@ -65,9 +61,6 @@ begin
     execute format('drop policy %I on storage.%I', p.policyname, p.tablename);
   end loop;
 end $$;
-
-drop policy if exists images_public_read on storage.objects;
-create policy images_public_read on storage.objects for select to anon, authenticated using (bucket_id = 'images');
 
 commit;
 
